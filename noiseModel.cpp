@@ -29,22 +29,23 @@
         return -1;
     }
 
+    Mat temp;
     int count = 1; //Meant to count frames
     while(1)
     {
         cap >> frame;
 
         cvtColor(frame, gray, COLOR_BGR2GRAY);
-
+        temp.create(frame.rows, frame.cols, CV_32FC1);
         if(count == 1)
         {
             sum.create(gray.rows, gray.cols, CV_32FC1);
             sumSq.create(gray.rows, gray.cols, CV_32FC1);
             noiseMean = Mat::zeros(gray.rows, gray.cols, CV_32FC1);
             noiseVar = Mat::zeros(gray.rows, gray.cols, CV_32FC1);
-            Mat temp;
-            temp.create(gray.rows, gray.cols, CV_32FC1);
-            gray.copyTo(temp);
+            // Mat temp;
+            // temp.create(gray.rows, gray.cols, CV_32FC1);
+            gray.convertTo(temp, CV_32F, 1, 0);
             temp /= 255.0;
             temp.copyTo(sum);
 
@@ -53,20 +54,23 @@
 
         else
         {
-            Mat temp;
-            temp = gray/255.0;
-            sum += gray;
+            
+            gray.convertTo(temp, CV_32F, 1, 0);
+            temp = temp/255.0;
+            sum += temp;
             noiseMean = sum / count;
-            count++;
+            
         }
 
+        count++;
         fs<<"test"<<noiseMean;
-        normalize(noiseMean,noiseMean,0,1,CV_MINMAX);
+        normalize(noiseMean,noiseMean,0,1,NORM_MINMAX);
+
 
         imshow("Mean", noiseMean);
         imshow("Video", gray);
 
-        if(waitKey(33) == 27)
+        if(waitKey(60) == 27)
             break;
     }
 
