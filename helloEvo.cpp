@@ -44,6 +44,7 @@
 
     */
     Mat bgimg;
+    std::vector < std::vector <Point> > objects;
     while(1)
     {
         cap >> frame;
@@ -82,11 +83,29 @@
 
         bgModel->getBackgroundImage(bgimg);
 
+        Mat contours;
+        fgMask.copyTo(contours);
 
+       // Mat hier;
+        findContours(contours, objects, RETR_LIST, CHAIN_APPROX_NONE);
+        Mat output=Mat::zeros(frameGray.rows, frameGray.cols, CV_8UC3);
+        if(objects.size() > 0)
+        {
+            for(int idx =0; idx<objects.size();idx++)
+            {
+                Scalar color( rand()&255, rand()&255, rand()&255 );
+                drawContours(output, objects, idx, color,  FILLED, 8 );
+            }
+        }
+        else
+            std::cout<<"\n No contours";
+
+       // std::cout<<"\n Num Labels"<<numLabels;
         imshow("image", frameGray);
-        imshow("foreground mask", fgMask);
-        imshow("foreground image", fgImg);
-
+        //imshow("foreground mask", fgMask);
+        //imshow("foreground image", fgImg);
+        //labels.convertTo(output, CV_8U);
+        imshow("Labels", output);
         if(!bgimg.empty())
           imshow("mean background image", bgimg );
         //vwMask << fgMask;
@@ -102,15 +121,6 @@
                 printf("Background update is off\n");
         }
         
-        //Mat noiseMean(frameGray.rows, frameGray.cols, CV_8UC1);
-        //noiseModelMean.copyTo(temp);
-        //temp *=255.0;
-        //temp.convertTo(noiseMean, CV_8U, 255, 0);
-        //noiseMean = floor(noiseMean * 255);
-        //imshow("video", frameGray);
-        //imshow("noiseMean", noiseMean);
-        //imshow("Temp", temp);
-        //c = waitKey(33);
     }
 
     imwrite("bgImg.jpeg", bgimg);
