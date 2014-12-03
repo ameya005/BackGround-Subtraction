@@ -10,6 +10,8 @@
  #include "opencv2/imgproc.hpp"
  #include <iostream>
  #include <string>
+
+ #define THRESHOLD 100
  using namespace cv;
 
  int main(int argc, char **argv)
@@ -89,20 +91,61 @@
        // Mat hier;
         findContours(contours, objects, RETR_LIST, CHAIN_APPROX_NONE);
         Mat output=Mat::zeros(frameGray.rows, frameGray.cols, CV_8UC3);
+        int idxMax = 0;
+        int maxArea = 0;
+        float distRatio;
+        int angularPosition;
+        Point centroid;
         if(objects.size() > 0)
         {
+            Rect bdRect;
+            std::vector <Rect> bdrectVec; 
             for(int idx =0; idx<objects.size();idx++)
             {
-                Scalar color( rand()&255, rand()&255, rand()&255 );
-                drawContours(output, objects, idx, color,  FILLED, 8 );
+                // Scalar color( rand()&255, rand()&255, rand()&255 );
+                // drawContours(output, objects, idx, color,  FILLED, 8 );
+                // bdRect = boundingRect(objects[idx]);
+                // bdrectVec.push_back(bdRect);
+                // rectangle(frame, bdRect, color, LINE_8, 0);
+                int area = contourArea(objects[idx]);
+                if( area >= maxArea && area > THRESHOLD )
+                {
+                    idxMax = idx;
+                    maxArea = area;
+                }
+               
             }
+            
+            Scalar color( rand()&255, rand()&255, rand()&255);
+            bdRect = boundingRect(objects[idxMax]);
+         // bdrectVec.push_back(bdRect);
+            rectangle(frame, bdRect, color, LINE_8, 0);
+
+            /********************Angle analysis*************************/
+
+            Moments contMom;
+            contMom = moments(objects[idxMax], true);
+            centroid = Point( (contMom.m10/contMom.m00) , (contMom.m01/contMom.m00) );
+
+            //std::cout<<"\n Centroid:"<<centroid.x<<" "<<centroid.y; 
+
+            distRatio = (float) ( ((frame.cols/2.0) -centroid.x) / (frame.cols/2.0) );
+            std::cout<<"\n Distance "<<distRatio;
+            angularPosition = distRatio * 33;
+            std::cout<<" Angle="<<angularPosition; 
+
+
         }
         else
+        {
             std::cout<<"\n No contours";
 
-       // std::cout<<"\n Num Labels"<<numLabels;
-        imshow("image", frameGray);
-        //imshow("foreground mask", fgMask);
+        }
+
+     // std::cout<<"\n Num Labels"<<numLabels;
+        imshow("image", frame);
+        //i
+        mshow("foreground mask", fgMask);
         //imshow("foreground image", fgImg);
         //labels.convertTo(output, CV_8U);
         imshow("Labels", output);
@@ -120,6 +163,8 @@
             else
                 printf("Background update is off\n");
         }
+
+
         
     }
 
